@@ -1,0 +1,29 @@
+package main
+
+import (
+	"fmt"
+	"net/http"
+
+	"github.com/arnavsaroj/goratelimiter/internal/limiter"
+	"github.com/arnavsaroj/goratelimiter/internal/middleware"
+)
+
+func main(){
+
+	manager:=limiter.NewManager(10,10.0/60.0)
+
+mux:=http.NewServeMux()
+
+mux.HandleFunc("/",rootFunc)
+
+wrappedMux:=middleware.RateLimiterMiddleware(manager)(mux)
+
+fmt.Print("backend running on port 8080")
+http.ListenAndServe(":8080",wrappedMux)
+
+
+}
+
+func rootFunc(w http.ResponseWriter,r* http.Request){
+w.Write([]byte("hello"))
+}
