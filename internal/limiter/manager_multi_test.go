@@ -2,6 +2,7 @@ package limiter_test
 
 import (
 	"context"
+	"math/rand"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -10,19 +11,21 @@ import (
 	"github.com/arnavsaroj/goratelimiter/internal/store"
 )
 
-func TestConcurrentRequests(t *testing.T) {
+func TestMultipleManagers(t *testing.T) {
 	rdb := store.NewRedisConnection()
-ctx:=context.Background()
+	ctx := context.Background()
 
-	// Clean up any previous test data
-	rdb.Del(ctx, "test-user:tokens")
-	rdb.Del(ctx, "test-user:last_refill")
+	rdb.Del(ctx, "distributed-test:tokens")
+	rdb.Del(ctx, "distributed-test:last_refill")
 
-	manager := limiter.NewManager(rdb, 10, 0) // capacity=10, no refill
+	manager1 := limiter.NewManager(rdb, 10, 0)
+	manager2 := limiter.NewManager(rdb, 10, 0)
+	manager3 := limiter.NewManager(rdb, 10, 0)
 
-	var wg sync.WaitGroup
 	var allowed int64
 	var denied int64
+
+	var wg sync.WaitGroup
 
 	totalRequests := 1000
 
@@ -32,9 +35,18 @@ ctx:=context.Background()
 		go func() {
 			defer wg.Done()
 
-			bucket := manager.GetBucket("test-user")
+			var allowedReq bool
 
-			if bucket.Allow() {
+			switch rand.Intn(3) {
+			case 0:
+				allowedReq = manager1.GetBucket("distributed-test").Allow()
+			case 1:
+				allowedReq = manager2.GetBucket("distributed-test").Allow()
+			case 2:
+				allowedReq = manager3.GetBucket("distributed-test").Allow()
+			}
+
+			if allowedReq {
 				atomic.AddInt64(&allowed, 1)
 			} else {
 				atomic.AddInt64(&denied, 1)
