@@ -2,7 +2,6 @@ package limiter
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -18,9 +17,8 @@ func NewRedisBucket(connection *redis.Client, capacity float64, refillRate float
 	return &redisBucket{capacity, ip, connection, refillRate}
 }
 
-func (b *redisBucket) Allow() bool {
+func (b *redisBucket) Allow(ctx context.Context) (bool,error){
 
-	ctx := context.Background()
 
 	keys := []string{
 		b.ip + ":tokens",
@@ -28,13 +26,13 @@ func (b *redisBucket) Allow() bool {
 	}
 
 	result, err := b.rdb.Eval(ctx, luaScript, keys, b.Capacity, b.refillRate).Int()
-fmt.Println("ip is", b.ip)
 	if err != nil {
-		return false
-	}
-	fmt.Println("result is ",result)
+//i am not returning the error here let it check in middleware itself
 
-return result==1
+		return false,err
+	}
+
+return result==1,nil
 
 }
 

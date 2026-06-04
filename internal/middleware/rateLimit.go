@@ -1,9 +1,13 @@
 package middleware
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/arnavsaroj/goratelimiter/internal/limiter"
 )
@@ -29,12 +33,33 @@ func RateLimiterMiddleware(manager *limiter.Manager) func(http.Handler) http.Han
 				}
 			}
 
+			ctx, cancel := context.WithTimeout(r.Context(), 15*time.Millisecond)
+			defer cancel()
+
 			bucket := manager.GetBucket(ip)
 
-			if !bucket.Allow() {
+			result, err := bucket.Allow(ctx)
+
+			if err != nil {
+				if errors.Is(err, context.DeadlineExceeded) {
+					//log timeout error here
+					fmt.Println("deadline exceeded of 15ms")
+					//we fall back to sync.map
+
+					return
+				}else {
+					//catch rest of the errors here
+				}
+			} else if result == false  {
 				http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
 				return
 			}
+
+			//earlier code
+			// if !bucket.Allow(ctx) {
+			// 	http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+			// 	return
+			// }
 			next.ServeHTTP(w, r)
 		})
 	}
