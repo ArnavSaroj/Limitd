@@ -11,6 +11,7 @@ type redisBucket struct {
 	ip         string
 	rdb        *redis.Client
 	refillRate float64
+	
 }
 
 func NewRedisBucket(connection *redis.Client, capacity float64, refillRate float64, ip string) *redisBucket {

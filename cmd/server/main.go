@@ -14,6 +14,8 @@ func main() {
 	rdb := store.NewRedisConnection()
 	manager := limiter.NewManager(rdb, 10, 10.0/60.0)
 
+	manager.StartRedisHealthchecker()
+
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", rootFunc)

@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -36,21 +35,58 @@ func RateLimiterMiddleware(manager *limiter.Manager) func(http.Handler) http.Han
 			ctx, cancel := context.WithTimeout(r.Context(), 15*time.Millisecond)
 			defer cancel()
 
+			if !manager.RedisHealthy.Load() {
+
+
+				fmt.Println("redis unhealthy!!")
+				fmt.Println("falling back to local bucket in memory bucket implementation")
+
+				localBucket := manager.GetLocalBucket(ip)
+
+				if !localBucket.Allow() {
+					http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+					return
+				}
+				next.ServeHTTP(w, r)
+				return
+			}
+
 			bucket := manager.GetBucket(ip)
 
 			result, err := bucket.Allow(ctx)
 
-			if err != nil {
-				if errors.Is(err, context.DeadlineExceeded) {
-					//log timeout error here
-					fmt.Println("deadline exceeded of 15ms")
-					//we fall back to sync.map
+			if err==nil{
+				manager.ConsecutiveFailures.Store(0)
 
-					return
-				}else {
-					//catch rest of the errors here
+				manager.RedisHealthy.Store(true)
+			}
+
+			if err != nil {
+
+				failures := manager.ConsecutiveFailures.Add(1)
+
+				if failures >= 3 {
+					if manager.RedisHealthy.Load() {
+						fmt.Println("Circuit Breaker opened")
+
+					}
+					manager.RedisHealthy.Store(false)
+
 				}
-			} else if result == false  {
+
+				fmt.Println("redis down!!")
+				fmt.Println("falling back to local bucket in memory bucket implementation")
+
+				localBucket := manager.GetLocalBucket(ip)
+
+				if !localBucket.Allow() {
+					http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+					return
+				}
+				next.ServeHTTP(w, r)
+				return
+
+			} else if result == false {
 				http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
 				return
 			}

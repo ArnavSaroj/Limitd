@@ -6,7 +6,7 @@ import (
 )
 
 type Bucket struct {
-	mu sync.Mutex
+	mu             sync.Mutex
 	NoOfTokens     float64
 	RefillRate     float64
 	Capacity       float64
@@ -27,7 +27,7 @@ func (b *Bucket) refill() {
 	}
 
 	elapsed := now.Sub(b.LastRefillTime)
-	var tokensToAdd float64 = (elapsed.Seconds()* b.RefillRate)
+	var tokensToAdd float64 = (elapsed.Seconds() * b.RefillRate)
 	b.NoOfTokens = min(b.NoOfTokens+tokensToAdd, b.Capacity)
 
 	b.LastRefillTime = now
@@ -36,7 +36,7 @@ func (b *Bucket) refill() {
 
 func (b *Bucket) Allow() bool {
 	b.mu.Lock()
-defer b.mu.Unlock()
+	defer b.mu.Unlock()
 	b.refill()
 	if b.NoOfTokens > 0 {
 		b.NoOfTokens = b.NoOfTokens - 1
