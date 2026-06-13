@@ -2,18 +2,34 @@ package middleware
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/arnavsaroj/goratelimiter/internal/limiter"
+	"github.com/arnavsaroj/goratelimiter/internal/metrics"
 )
 
 func RateLimiterMiddleware(manager *limiter.Manager) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+			if r.URL.Path == "/metrics" {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			start := time.Now()
+
+			defer func() {
+				metrics.RequestDuration.Observe(
+					time.Since(start).Seconds(),
+				)
+			}()
+
+			metrics.RequestsTotal.WithLabelValues("incoming").Inc()
 
 			//extract the ip address of the request however this is not very good as if u use load balancer this wil return the ip of the lb lmao
 			//so get x forwaded for port instead of this
@@ -32,21 +48,20 @@ func RateLimiterMiddleware(manager *limiter.Manager) func(http.Handler) http.Han
 				}
 			}
 
-			ctx, cancel := context.WithTimeout(r.Context(), 15*time.Millisecond)
+			ctx, cancel := context.WithTimeout(r.Context(), 50*time.Millisecond)
 			defer cancel()
 
 			if !manager.RedisHealthy.Load() {
 
-
-				fmt.Println("redis unhealthy!!")
-				fmt.Println("falling back to local bucket in memory bucket implementation")
-
 				localBucket := manager.GetLocalBucket(ip)
+				metrics.FallbackRequestsTotal.Inc()
 
 				if !localBucket.Allow() {
+					metrics.RequestsTotal.WithLabelValues("blocked").Inc()
 					http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
 					return
 				}
+				metrics.RequestsTotal.WithLabelValues("allowed").Inc()
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -55,38 +70,43 @@ func RateLimiterMiddleware(manager *limiter.Manager) func(http.Handler) http.Han
 
 			result, err := bucket.Allow(ctx)
 
-			if err==nil{
+			if err == nil {
 				manager.ConsecutiveFailures.Store(0)
 
 				manager.RedisHealthy.Store(true)
 			}
 
 			if err != nil {
-
+				metrics.RedisErrorsTotal.Inc()
 				failures := manager.ConsecutiveFailures.Add(1)
 
 				if failures >= 3 {
 					if manager.RedisHealthy.Load() {
-						fmt.Println("Circuit Breaker opened")
-
+						slog.Info("circuit breaker opened")
 					}
 					manager.RedisHealthy.Store(false)
 
 				}
-
-				fmt.Println("redis down!!")
-				fmt.Println("falling back to local bucket in memory bucket implementation")
+				slog.Error("redis_error", "error", err)
 
 				localBucket := manager.GetLocalBucket(ip)
+				metrics.FallbackRequestsTotal.Inc()
+
+				slog.Warn("fallback_activated",
+					"reason", err.Error(),
+				)
 
 				if !localBucket.Allow() {
+					metrics.RequestsTotal.WithLabelValues("blocked").Inc()
 					http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
 					return
 				}
+				metrics.RequestsTotal.WithLabelValues("allowed").Inc()
 				next.ServeHTTP(w, r)
 				return
 
 			} else if result == false {
+				metrics.RequestsTotal.WithLabelValues("blocked").Inc()
 				http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
 				return
 			}
@@ -96,6 +116,7 @@ func RateLimiterMiddleware(manager *limiter.Manager) func(http.Handler) http.Han
 			// 	http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
 			// 	return
 			// }
+			metrics.RequestsTotal.WithLabelValues("allowed").Inc()
 			next.ServeHTTP(w, r)
 		})
 	}

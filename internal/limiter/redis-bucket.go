@@ -25,6 +25,7 @@ func (b *redisBucket) Allow(ctx context.Context) (bool,error){
 		b.ip + ":tokens",
 		b.ip + ":last_refill",
 	}
+	
 
 	result, err := b.rdb.Eval(ctx, luaScript, keys, b.Capacity, b.refillRate).Int()
 	if err != nil {
@@ -65,12 +66,12 @@ tokens=math.min(current_tokens+tokens,capacity)
 last_refill=now
 
 
-redis.call('SET',KEYS[1],tokens)
-redis.call('SET',KEYS[2],last_refill)
+redis.call('SET',KEYS[1],tokens,"EX",3600)
+redis.call('SET',KEYS[2],last_refill,"EX",3600)
 
 if tokens>=1 then 
 tokens=tokens-1
-redis.call('SET',KEYS[1],tokens)
+redis.call('SET',KEYS[1],tokens,"EX",3600)
 return 1
 else 
 return 0

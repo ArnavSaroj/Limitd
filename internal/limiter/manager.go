@@ -2,7 +2,7 @@ package limiter
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -64,7 +64,6 @@ func (m *Manager) GetLocalBucket(ip string) *Bucket {
 		return bucket
 	}
 
-
 	m.Mutex.Lock()
 	defer m.Mutex.Unlock()
 
@@ -96,15 +95,16 @@ func (m *Manager) StartRedisHealthchecker() {
 
 			if err != nil {
 
-				
 				if m.RedisHealthy.Load() {
-					fmt.Println("Redis became unhealthy")
+					slog.Warn("fallback_activated",
+						"reason", err.Error(),
+					)
 				}
-					m.RedisHealthy.Store(false)
+				m.RedisHealthy.Store(false)
 
 			} else {
 				if !m.RedisHealthy.Load() {
-					fmt.Println("Redis recovered")
+					slog.Info("redis_recovered")
 				}
 				m.RedisHealthy.Store(true)
 				m.ConsecutiveFailures.Store(0)
@@ -112,4 +112,37 @@ func (m *Manager) StartRedisHealthchecker() {
 		}
 
 	}()
+}
+
+func (m *Manager) BucketSweepGoroutine() {
+
+	ticker := time.NewTicker(5 * time.Minute)
+
+	go func() {
+
+		defer ticker.Stop()
+
+		for range ticker.C {
+			m.SweepInactiveBuckets()
+		}
+
+	}()
+}
+
+func (m *Manager) SweepInactiveBuckets() {
+	cutoff := time.Now().Add(-1 * time.Hour)
+
+	m.Mutex.Lock()
+	defer m.Mutex.Unlock()
+
+	for ip, bucket := range m.localBuckets {
+		bucket.mu.Lock()
+		lastAccessed := bucket.LastSeenTime
+
+		if lastAccessed.Before(cutoff) {
+			delete(m.localBuckets, ip)
+		}
+
+	}
+
 }

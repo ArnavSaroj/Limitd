@@ -11,10 +11,11 @@ type Bucket struct {
 	RefillRate     float64
 	Capacity       float64
 	LastRefillTime time.Time
+	LastSeenTime   time.Time
 }
 
 func newBucket(capacity float64, refillrate float64) *Bucket {
-	return &Bucket{NoOfTokens: capacity, RefillRate: refillrate, Capacity: capacity, LastRefillTime: time.Now()}
+	return &Bucket{NoOfTokens: capacity, RefillRate: refillrate, Capacity: capacity, LastRefillTime: time.Now(), LastSeenTime: time.Now()}
 }
 
 func (b *Bucket) refill() {
@@ -38,6 +39,7 @@ func (b *Bucket) Allow() bool {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	b.refill()
+	b.LastSeenTime = time.Now()
 	if b.NoOfTokens > 0 {
 		b.NoOfTokens = b.NoOfTokens - 1
 		return true
@@ -45,3 +47,7 @@ func (b *Bucket) Allow() bool {
 
 	return false
 }
+
+
+
+

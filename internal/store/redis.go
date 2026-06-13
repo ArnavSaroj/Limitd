@@ -2,8 +2,7 @@ package store
 
 import (
 	"context"
-	"fmt"
-	"log"
+	"log/slog"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -22,11 +21,11 @@ func NewRedisConnection() *redis.Client {
 	pong, err := rdb.Ping(ctx).Result()
 
 	if err != nil {
-		log.Fatal("Error connecting to Redis:", err)
+		slog.Warn("Redis unavailable at startup, running in fallback mode")
 
 	}
 
-	fmt.Println("Connected to Redis:", pong)
+	slog.Info("Connected to Redis", "pong", pong)
 
 	return rdb
 
