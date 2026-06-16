@@ -172,8 +172,21 @@ hooked up.
 
 ## Screenshots
 
-<!-- Grafana dashboard: throughput, latency percentiles, allowed vs blocked -->
-<!-- ![Grafana dashboard](assets/grafana-dashboard.png) -->
+Grafana panels captured during a stress-test run, scraping Prometheus. Excuse the
+rough dashboards.
 
-<!-- k6 stress test summary output -->
-<!-- ![k6 stress run](assets/k6-stress.png) -->
+### Requests per second
+
+![Requests per second](assets/grafana-SS/rps.png)
+
+### Total requests
+
+![Total requests](assets/grafana-SS/totalRequests.png)
+
+### Request latency
+
+![Request latency](assets/grafana-SS/latencypanel.png)
+
+### Redis errors
+
+![Redis errors](assets/grafana-SS/rediserrors.png)
