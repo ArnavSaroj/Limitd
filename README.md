@@ -19,7 +19,7 @@ Every request passes through the limiter middleware, which derives the client ke
 from `X-Forwarded-For` (falling back to `RemoteAddr`). The decision path depends on
 whether Redis is currently considered healthy:
 
-```
+```text
 request → middleware → key = X-Forwarded-For
                           │
               RedisHealthy?├── yes ─→ EVAL Lua (atomic refill + decrement) ─→ allow / 429
@@ -97,7 +97,7 @@ Under the 2000-VU stress run, Redis started timing out and the breaker did its j
 
 The flow under failure:
 
-```
+```text
 heavy load → Redis timeouts → breaker opens → fallback to in-memory limiter → traffic keeps flowing
 ```
 
@@ -117,6 +117,13 @@ rather than pre-aggregated numbers.
 | `requests_duration_seconds` | histogram | end-to-end request latency |
 | `redis_errors_total` | counter | failed Redis operations |
 | `fallback_request_total` | counter | requests served by the in-memory limiter |
+
+Grafana starts empty, so wire it up once after `docker compose up`. Log in at
+`http://localhost:3000` (default `admin`/`admin`), add a Prometheus data source
+pointing at `http://prometheus:9090`, then import
+[`grafana/dashboards/rate-limiter-dashboard.json`](grafana/dashboards/rate-limiter-dashboard.json)
+under Dashboards → Import and select that data source when prompted. The panels in
+Screenshots come from this dashboard.
 
 ## Running Locally
 
