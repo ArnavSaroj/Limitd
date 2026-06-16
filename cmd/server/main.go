@@ -64,7 +64,7 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
-		10*time.Second,
+		5*time.Second,
 	)
 	defer cancel()
 

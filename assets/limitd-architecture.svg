@@ -1,0 +1,207 @@
+<svg viewBox="0 0 960 380" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" font-family="ui-monospace, 'Cascadia Code', 'JetBrains Mono', 'Fira Code', Menlo, Consolas, monospace">
+  <defs>
+    <marker id="arrow" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#565f89"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#9ece6a"/>
+    </marker>
+    <pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse">
+      <path d="M26 0 H0 V26" fill="none" stroke="#20233a" stroke-width="1"/>
+    </pattern>
+    <clipPath id="bucketClip">
+      <rect x="186" y="159" width="78" height="116" rx="9"/>
+    </clipPath>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <style>
+      .lbl  { fill:#c0caf5; font-size:13px; }
+      .mut  { fill:#565f89; font-size:11px; }
+      .tag  { fill:#7dcfff; font-size:11px; }
+      .h1   { fill:#7aa2f7; font-size:26px; font-weight:700; }
+      .h2   { fill:#565f89; font-size:12px; }
+      .node { fill:#a9b1d6; font-size:14px; font-weight:700; }
+    </style>
+  </defs>
+
+  <!-- ===== background card ===== -->
+  <rect x="0" y="0" width="960" height="380" rx="16" fill="#1a1b26"/>
+  <rect x="0" y="0" width="960" height="380" rx="16" fill="url(#grid)" opacity="0.5"/>
+  <rect x="0.5" y="0.5" width="959" height="379" rx="16" fill="none" stroke="#2f344d" stroke-width="1"/>
+
+  <!-- ===== title ===== -->
+  <text x="34" y="42" class="h1">Limitd</text>
+  <text x="34" y="60" class="h2">distributed rate limiter &#183; Go</text>
+
+  <!-- ===== status pill ===== -->
+  <g>
+    <rect x="700" y="26" width="226" height="28" rx="14" fill="#1f2335" stroke="#2f344d"/>
+    <g>
+      <circle cx="718" cy="40" r="4" fill="#9ece6a"/>
+      <text x="730" y="44" class="lbl" font-size="12">Redis: healthy &#183; primary</text>
+      <animate attributeName="opacity" dur="12s" repeatCount="indefinite"
+        keyTimes="0;0.31;0.345;0.835;0.87;1" values="1;1;0;0;1;1"/>
+    </g>
+    <g>
+      <circle cx="718" cy="40" r="4" fill="#f7768e"/>
+      <text x="730" y="44" class="lbl" font-size="12" fill="#e0af68">Redis: down &#8594; in-memory</text>
+      <animate attributeName="opacity" dur="12s" repeatCount="indefinite"
+        keyTimes="0;0.31;0.345;0.835;0.87;1" values="0;0;1;1;0;0"/>
+    </g>
+  </g>
+
+  <!-- ===== requests source ===== -->
+  <text x="30" y="170" class="mut">incoming</text>
+  <text x="30" y="183" class="mut">requests</text>
+  <line x1="30" y1="192" x2="150" y2="192" stroke="#2f344d" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <g fill="#7dcfff">
+    <circle r="4">
+      <animateMotion dur="2.4s" repeatCount="indefinite" path="M 30 192 L 146 192"/>
+      <animate attributeName="opacity" dur="2.4s" repeatCount="indefinite" keyTimes="0;0.1;0.8;1" values="0;1;1;0"/>
+    </circle>
+    <circle r="4">
+      <animateMotion dur="2.4s" begin="0.8s" repeatCount="indefinite" path="M 30 192 L 146 192"/>
+      <animate attributeName="opacity" dur="2.4s" begin="0.8s" repeatCount="indefinite" keyTimes="0;0.1;0.8;1" values="0;1;1;0"/>
+    </circle>
+    <circle r="4">
+      <animateMotion dur="2.4s" begin="1.6s" repeatCount="indefinite" path="M 30 192 L 146 192"/>
+      <animate attributeName="opacity" dur="2.4s" begin="1.6s" repeatCount="indefinite" keyTimes="0;0.1;0.8;1" values="0;1;1;0"/>
+    </circle>
+  </g>
+
+  <!-- ===== Limitd box ===== -->
+  <rect x="150" y="100" width="260" height="200" rx="12" fill="#1f2335" stroke="#3b4261" stroke-width="1.5"/>
+  <text x="166" y="124" class="node" fill="#7aa2f7">Limitd</text>
+  <text x="166" y="140" class="mut">token bucket &#183; atomic</text>
+
+  <!-- bucket -->
+  <rect x="186" y="159" width="78" height="116" rx="9" fill="#16161e" stroke="#3b4261"/>
+  <g clip-path="url(#bucketClip)">
+    <rect x="186" y="159" width="78" height="116" fill="#9ece6a" opacity="0.85">
+      <animate attributeName="y"      dur="3s" repeatCount="indefinite" keyTimes="0;0.42;0.55;0.85;1" values="159;239;239;159;159"/>
+      <animate attributeName="height" dur="3s" repeatCount="indefinite" keyTimes="0;0.42;0.55;0.85;1" values="116;36;36;116;116"/>
+      <animate attributeName="fill"   dur="3s" repeatCount="indefinite" keyTimes="0;0.42;0.55;0.85;1" values="#9ece6a;#e0af68;#e0af68;#9ece6a;#9ece6a"/>
+    </rect>
+  </g>
+  <line x1="270" y1="172" x2="282" y2="172" stroke="#2f344d"/>
+  <line x1="270" y1="217" x2="282" y2="217" stroke="#2f344d"/>
+  <line x1="270" y1="262" x2="282" y2="262" stroke="#2f344d"/>
+  <text x="292" y="176" class="tag">tokens</text>
+  <text x="292" y="214" class="mut">refill</text>
+  <text x="292" y="228" class="mut">100 r/s</text>
+  <text x="292" y="266" class="mut">/metrics</text>
+
+  <!-- ===== connectors: Limitd -> Redis ===== -->
+  <path d="M 410 150 C 500 140, 560 120, 618 110" fill="none" stroke="#2a2f47" stroke-width="2"/>
+  <path d="M 410 150 C 500 140, 560 120, 618 110" fill="none" stroke="#7aa2f7" stroke-width="2.5" marker-end="url(#arrow)">
+    <animate attributeName="opacity" dur="12s" repeatCount="indefinite" keyTimes="0;0.31;0.345;0.835;0.87;1" values="1;1;0;0;1;1"/>
+  </path>
+  <!-- broken link marker -->
+  <g opacity="0">
+    <path d="M 410 150 C 500 140, 560 120, 618 110" fill="none" stroke="#f7768e" stroke-width="2.5" stroke-dasharray="6 6"/>
+    <text x="506" y="118" fill="#f7768e" font-size="18" font-weight="700" text-anchor="middle">&#10007;</text>
+    <animate attributeName="opacity" dur="12s" repeatCount="indefinite" keyTimes="0;0.31;0.345;0.835;0.87;1" values="0;0;1;1;0;0"/>
+  </g>
+  <text x="455" y="105" class="mut">consult</text>
+
+  <!-- ===== connectors: Limitd -> fallback ===== -->
+  <path d="M 410 250 C 500 260, 560 272, 618 274" fill="none" stroke="#2a2f47" stroke-width="2"/>
+  <path d="M 410 250 C 500 260, 560 272, 618 274" fill="none" stroke="#9ece6a" stroke-width="2.5" marker-end="url(#arrowGreen)">
+    <animate attributeName="opacity" dur="12s" repeatCount="indefinite" keyTimes="0;0.40;0.44;0.81;0.85;1" values="0;0;1;1;0;0"/>
+  </path>
+  <text x="448" y="300" class="mut">fallback</text>
+
+  <!-- ===== Redis node ===== -->
+  <g>
+    <rect x="620" y="58" width="290" height="104" rx="12" fill="#1f2335" stroke="#3b4261" stroke-width="1.5"/>
+    <text x="640" y="92" class="node">Redis + Lua</text>
+    <text x="640" y="112" class="mut">atomic token store &#183; primary</text>
+    <text x="640" y="132" class="tag">EVAL token_bucket.lua</text>
+    <!-- online dot (healthy/recover only) -->
+    <g>
+      <circle cx="886" cy="80" r="5" fill="#9ece6a" filter="url(#glow)">
+        <animate attributeName="r" dur="1.4s" repeatCount="indefinite" values="4;6;4"/>
+      </circle>
+      <animate attributeName="opacity" dur="12s" repeatCount="indefinite" keyTimes="0;0.31;0.34;0.84;0.87;1" values="1;1;0;0;1;1"/>
+    </g>
+    <!-- DOWN overlay (down + fallback window) -->
+    <g opacity="0">
+      <rect x="620" y="58" width="290" height="104" rx="12" fill="#f7768e" opacity="0.10"/>
+      <rect x="620.5" y="58.5" width="289" height="103" rx="12" fill="none" stroke="#f7768e" stroke-width="1.5" stroke-dasharray="5 5"/>
+      <circle cx="886" cy="80" r="5" fill="#f7768e"/>
+      <text x="826" y="148" fill="#f7768e" font-size="12" font-weight="700">&#9679; CONNECTION REFUSED</text>
+      <animate attributeName="opacity" dur="12s" repeatCount="indefinite" keyTimes="0;0.31;0.34;0.81;0.86;1" values="0;0;1;1;0;0"/>
+    </g>
+    <!-- death flash -->
+    <rect x="620" y="58" width="290" height="104" rx="12" fill="#f7768e" opacity="0">
+      <animate attributeName="opacity" dur="12s" repeatCount="indefinite" keyTimes="0;0.325;0.345;0.375;1" values="0;0;0.55;0;0"/>
+    </rect>
+  </g>
+
+  <!-- ===== Fallback node ===== -->
+  <g>
+    <rect x="620" y="222" width="290" height="104" rx="12" fill="#1f2335" stroke="#3b4261" stroke-width="1.5"/>
+    <text x="640" y="256" class="node" fill="#7f88b0">in-memory store</text>
+    <text x="640" y="276" class="mut">sync.Map &#183; per-node fallback</text>
+    <text x="640" y="296" class="mut">degraded, still serving</text>
+    <circle cx="886" cy="244" r="5" fill="#565f89"/>
+    <!-- ACTIVE overlay (fallback window) -->
+    <g opacity="0">
+      <rect x="620" y="222" width="290" height="104" rx="12" fill="#9ece6a" opacity="0.10"/>
+      <rect x="620.5" y="222.5" width="289" height="103" rx="12" fill="none" stroke="#9ece6a" stroke-width="1.5"/>
+      <text x="640" y="256" class="node" fill="#9ece6a">in-memory store</text>
+      <circle cx="886" cy="244" r="5" fill="#9ece6a" filter="url(#glow)">
+        <animate attributeName="r" dur="1.2s" repeatCount="indefinite" values="4;6;4"/>
+      </circle>
+      <text x="816" y="316" fill="#9ece6a" font-size="12" font-weight="700">&#9679; ACTIVE</text>
+      <animate attributeName="opacity" dur="12s" repeatCount="indefinite" keyTimes="0;0.40;0.44;0.81;0.85;1" values="0;0;1;1;0;0"/>
+    </g>
+  </g>
+
+  <!-- ===== Redis check packet (round trip) ===== -->
+  <circle r="5" fill="#7aa2f7" filter="url(#glow)" opacity="0">
+    <animateMotion dur="12s" repeatCount="indefinite" calcMode="linear"
+      path="M 410 150 C 500 140, 560 120, 618 110"
+      keyTimes="0;0.10;0.22;0.85;0.93;0.98;1"
+      keyPoints="0;1;0;0;1;0;0"/>
+    <animate attributeName="opacity" dur="12s" repeatCount="indefinite"
+      keyTimes="0;0.005;0.23;0.25;0.845;0.85;0.99;1"
+      values="0;1;1;0;0;1;1;0"/>
+  </circle>
+
+  <!-- ===== Fallback check packet (shuttle) ===== -->
+  <circle r="5" fill="#9ece6a" filter="url(#glow)" opacity="0">
+    <animateMotion dur="12s" repeatCount="indefinite" calcMode="linear"
+      path="M 410 250 C 500 260, 560 272, 618 274"
+      keyTimes="0;0.44;0.52;0.60;0.68;0.76;0.80;1"
+      keyPoints="0;0;1;0;1;0;0;0"/>
+    <animate attributeName="opacity" dur="12s" repeatCount="indefinite"
+      keyTimes="0;0.44;0.45;0.80;0.805;1"
+      values="0;0;1;1;0;0"/>
+  </circle>
+
+  <!-- ===== output lane ===== -->
+  <line x1="410" y1="192" x2="946" y2="192" stroke="#232841" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="690" y="186" class="mut" text-anchor="middle">served &#183; 200 / 429</text>
+  <!-- allowed 200 packets -->
+  <g>
+    <circle r="4.5" fill="#9ece6a">
+      <animateMotion dur="2.8s" repeatCount="indefinite" path="M 414 192 L 942 192"/>
+      <animate attributeName="opacity" dur="2.8s" repeatCount="indefinite" keyTimes="0;0.05;0.9;1" values="0;1;1;0"/>
+    </circle>
+    <circle r="4.5" fill="#9ece6a">
+      <animateMotion dur="2.8s" begin="1.4s" repeatCount="indefinite" path="M 414 192 L 942 192"/>
+      <animate attributeName="opacity" dur="2.8s" begin="1.4s" repeatCount="indefinite" keyTimes="0;0.05;0.9;1" values="0;1;1;0"/>
+    </circle>
+    <!-- a 429 (rate limited) packet -->
+    <circle r="4.5" fill="#f7768e">
+      <animateMotion dur="5.6s" begin="0.7s" repeatCount="indefinite" path="M 414 192 L 942 192"/>
+      <animate attributeName="opacity" dur="5.6s" begin="0.7s" repeatCount="indefinite" keyTimes="0;0.03;0.45;0.48;1" values="0;1;1;0;0"/>
+    </circle>
+  </g>
+
+  <!-- ===== caption ===== -->
+  <text x="34" y="362" class="mut">when Redis drops, Limitd fails over to a per-node in-memory bucket &#8212; no dropped traffic, just degraded accuracy.</text>
+</svg>

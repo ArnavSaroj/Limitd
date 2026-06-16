@@ -1,14 +1,17 @@
 import http from 'k6/http';
 import { check } from 'k6';
 
-//this runs a multiple ip load test
 export const options = {
   vus: 200,
   duration: '1m',
+
+  thresholds: {
+    http_req_duration: ['p(95)<100'],
+    checks: ['rate>0.99'],
+  },
 };
 
 export default function () {
-  // Simulate 1000 unique users
   const ip = `10.${__VU % 255}.${__ITER % 255}.${(__VU + __ITER) % 255}`;
 
   const res = http.get('http://localhost:8080/', {
@@ -18,6 +21,7 @@ export default function () {
   });
 
   check(res, {
-    'status is 200 or 429': (r) => r.status === 200 || r.status === 429,
+    'status is 200 or 429': (r) =>
+      r.status === 200 || r.status === 429,
   });
 }

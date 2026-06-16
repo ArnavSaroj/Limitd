@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -21,6 +22,11 @@ func NewRedisConnection() *redis.Client {
 		Password: "", // no password
 		DB:       0,  // use default DB
 		Protocol: 2,
+		PoolSize: 100,
+		MinIdleConns: 20,
+		ReadTimeout: 500*time.Millisecond,
+		WriteTimeout: 500*time.Millisecond,
+		DialTimeout: 500*time.Millisecond,
 	})
 
 	ctx := context.Background()
