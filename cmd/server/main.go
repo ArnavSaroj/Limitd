@@ -1,11 +1,15 @@
 package main
 
 import (
-	
+	"context"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
+	"github.com/arnavsaroj/goratelimiter/internal/handlers"
 	"github.com/arnavsaroj/goratelimiter/internal/limiter"
 	"github.com/arnavsaroj/goratelimiter/internal/middleware"
 	"github.com/arnavsaroj/goratelimiter/internal/store"
@@ -16,14 +20,10 @@ import (
 
 func main() {
 
-
-	logger:=slog.New(slog.NewJSONHandler(os.Stdout,nil))
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	slog.SetDefault(logger)
 
-	slog.Info("server-starting")
-
-	slog.Info("server-started","port",8080)
 
 
 	rdb := store.NewRedisConnection()
@@ -32,15 +32,51 @@ func main() {
 	manager.StartRedisHealthchecker()
 
 	mux := http.NewServeMux()
+	metrics.Init()
 
 	mux.HandleFunc("/", rootFunc)
-	mux.Handle("/metrics",promhttp.Handler())
+	mux.Handle("/metrics", promhttp.Handler())
+	mux.HandleFunc("/health", handlers.Healthz)
 
 	wrappedMux := middleware.RateLimiterMiddleware(manager)(mux)
 
-	metrics.Init()
 
-	http.ListenAndServe(":8080", wrappedMux)
+	srv := &http.Server{
+		Addr:    ":8080",
+		Handler: wrappedMux,
+	}
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil &&
+			err != http.ErrServerClosed {
+			logger.Error("server error", "error", err)
+			os.Exit(1)
+		}
+	}()
+	slog.Info("server-started", "port", 8080)
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+
+	<-quit
+
+	logger.Info("shutdown signal received")
+
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		10*time.Second,
+	)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		logger.Error("shutdown failed", "error", err)
+	}
+
+	if err := rdb.Close(); err != nil {
+		logger.Error("redis close failed", "error", err)
+	}
+
+	logger.Info("server exited gracefully")
 
 }
 

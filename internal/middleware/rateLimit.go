@@ -21,6 +21,11 @@ func RateLimiterMiddleware(manager *limiter.Manager) func(http.Handler) http.Han
 				return
 			}
 
+			if r.URL.Path == "/health" {
+				next.ServeHTTP(w, r)
+				return
+			}
+
 			start := time.Now()
 
 			defer func() {
@@ -48,7 +53,7 @@ func RateLimiterMiddleware(manager *limiter.Manager) func(http.Handler) http.Han
 				}
 			}
 
-			ctx, cancel := context.WithTimeout(r.Context(), 50*time.Millisecond)
+			ctx, cancel := context.WithTimeout(r.Context(), 100*time.Millisecond)
 			defer cancel()
 
 			if !manager.RedisHealthy.Load() {

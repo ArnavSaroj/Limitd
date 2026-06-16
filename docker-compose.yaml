@@ -1,0 +1,45 @@
+services:
+   redis:
+     image: redis:latest
+     ports:
+       - "6379:6379"
+     command:
+     - redis-server
+     - --maxmemory
+     - 512mb
+     - --maxmemory-policy
+     - allkeys-lru  
+
+   rate-limiter:
+      build: .
+      container_name: rate-limiter
+      ports:
+        - "8080:8080"   
+      depends_on:
+        - redis
+      environment:
+        - REDIS_ADDR=redis:6379
+
+   prometheus:
+    container_name: prometheus
+    image: prom/prometheus:v2.55.0
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090     
+    depends_on:
+      - rate-limiter  
+    
+
+   grafana:
+    container_name: grafana
+    image: grafana/grafana:11.3.0
+    volumes:
+      - grafana-data:/var/lib/grafana
+    ports:
+      - 3000:3000
+    depends_on:
+      - prometheus  
+  
+volumes:
+  grafana-data:  
