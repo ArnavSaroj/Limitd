@@ -29,6 +29,10 @@ request → middleware → key = X-Forwarded-For
                           └── no  ─→ in-memory token bucket ─→ allow / 429
 ```
 
+<p align="center">
+  <img src="assets/archi-excalidraw.png" alt="Architecture (Excalidraw)" width="820">
+</p>
+
 The token bucket is the same algorithm on both paths: a bucket of `capacity` tokens
 that refills at a fixed rate, one token spent per request. On the Redis path the
 refill math, the bounds check and the decrement all happen in one `EVAL`, so there's
