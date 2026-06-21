@@ -30,7 +30,7 @@ request → middleware → key = X-Forwarded-For
 ```
 
 <p align="center">
-  <img src="assets/archi-excalidraw.png" alt="Architecture (Excalidraw)" width="820">
+  <img src="assets/image.png" alt="Architecture (Excalidraw)" width="820">
 </p>
 
 The token bucket is the same algorithm on both paths: a bucket of `capacity` tokens
